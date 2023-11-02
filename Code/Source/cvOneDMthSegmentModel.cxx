@@ -277,9 +277,8 @@ void cvOneDMthSegmentModel::FormElement(long element,
 	cvOneDMaterial* material = sub->GetMaterial();
 
 	std::cout << "FormElement called with the following inputs:" << std::endl;
-	std::cout << "  element: " << element << ", ith: " << ith;
-	std::cout << "  get_vec: " << get_vec << std::endl;
-	std::cout << "  get_mat" << get_mat << std::endl;
+	std::cout << "  element: " << element << ", ith: " << ith <<std::endl;
+	elementVector->print(std::cout);
 
 	// get material properties
 	strcpy(propName,"density");
