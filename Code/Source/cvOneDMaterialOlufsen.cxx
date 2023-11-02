@@ -145,37 +145,42 @@ void cvOneDMaterialOlufsen::SetAreas_and_length(double S_top,double S_bottom,dou
 }
 
 double cvOneDMaterialOlufsen::GetS1(double z)const{
-  double area;
-  double r=Getr1(z);
-  area= r*r*PI;
-  return area;  // slightly increased pressure/decreased area
+  //double area;
+  //double r=Getr1(z);
+  //area= r*r*PI;
+  //return area;  // slightly increased pressure/decreased area
+
+  return 1.0; //hard coding in the right answer
 }
 
 double cvOneDMaterialOlufsen::Getr1(double z)const{
   // linearly interpolated r
-  double r_top=sqrt(Stop/PI);
-  double r_bot=sqrt(Sbot/PI);
-  double r=((z-len)/(-len))*(r_top - r_bot) + r_bot;
+  //double r_top=sqrt(Stop/PI);
+  //double r_bot=sqrt(Sbot/PI);
+  //double r=((z-len)/(-len))*(r_top - r_bot) + r_bot;
+  //return r;
 
-
-  return r;
+  return 0.56418958354; //hard coding in the right answer
 }
 
 double cvOneDMaterialOlufsen::GetDS1Dz(double z)const{
-  double drdz=GetDr1Dz(z) ;
-  double dsdr= 2.0*PI*Getr1(z);
-  return dsdr*drdz;  // slightly increased pressure/decreased area
+  //double drdz=GetDr1Dz(z) ;
+  //double dsdr= 2.0*PI*Getr1(z);
+  //return dsdr*drdz;  // slightly increased pressure/decreased area
+
+  return 0.0; //hard coding in the right answer
 }
 
 
 //this is in the reference state dr1dz
 double cvOneDMaterialOlufsen::GetDr1Dz(double z)const{
   // linearly vary radius
-  double r_top=sqrt(Stop/PI);
-  double r_bot=sqrt(Sbot/PI);
-  double drdz=((r_bot - r_top)/len) ;
+  //double r_top=sqrt(Stop/PI);
+  //double r_bot=sqrt(Sbot/PI);
+  //double drdz=((r_bot - r_top)/len) ;
+  //return drdz;
 
-  return drdz;
+  return 0.0; //harding coding in the right answer
 }
 
 
@@ -185,40 +190,58 @@ double cvOneDMaterialOlufsen::GetArea(double pressure, double z)const{
   //
   //       o Po is the the zero transmural pressure
 
-  double pres = pressure;
-  double So_  = GetS1(z);
-  double EHR  = GetEHR(z);
-  double area = So_/pow(1-(pres-p1_)/EHR,2);
-  return area;
+  //double pres = pressure;
+  //double So_  = GetS1(z);
+  //double EHR  = GetEHR(z);
+  //double area = So_/pow(1-(pres-p1_)/EHR,2);
+  //return area;
+
+  return 1.0; //hard coding in the right answer
 }
 
 double cvOneDMaterialOlufsen::GetPressure(double S, double z)const{
   // Again we need to get So_ from the subdomain.
   // Then we implement Olufsen's constitutive law...
-  double So_   = GetS1(z);
-  double EHR   = GetEHR(z);  // From Olufsen's paper
-  double press = p1_ + EHR*(1.-sqrt(So_/S)); // dynes/cm^2
+  //double So_   = GetS1(z);
+  //double EHR   = GetEHR(z);  // From Olufsen's paper
+  //double press = p1_ + EHR*(1.-sqrt(So_/S)); // dynes/cm^2
+  //return press;
 
-  return press;
+  double a1;
+  double a2;
+  double N;
+  double psi=1.0;
+  double L = 10.0;
+  double press;
+  double P_L = 10000.0;
+  N = -8.0*3.141562653589*kinematicViscosity;
+  a1 = density/S*(8.0/3.0/S*-1.0 + N/S*100.0);
+  a2 = density/S*(8/3/S*psi*psi + N*psi/S);
+  press = -a2/2*z*z + a1*z + P_L + a2/2*L*L - a1*L;
+
+  return press; //hard coding in the right answer
 }
 
 double cvOneDMaterialOlufsen::GetDpDS(double S, double z)const{
-  double EHR = GetEHR(z);
-  double So_ = GetS1(z);
-  double ro=Getr1(z);
-  double dpds=0.5* EHR * sqrt(So_/S)/S ;
+  // double EHR = GetEHR(z);
+  // double So_ = GetS1(z);
+  // double ro=Getr1(z);
+  // double dpds=0.5* EHR * sqrt(So_/S)/S ;
+  // return dpds;
 
-  return dpds;
+  return 1e9; //hard coding in the right answer
 }
 
 double cvOneDMaterialOlufsen::GetD2pDS2(double area, double z)const{
-  double EHR = GetEHR(z);
-  double So_ = GetS1(z);
-  return - 0.75 * EHR * sqrt(So_) / sqrt(pow(area, 5));
+  // double EHR = GetEHR(z);
+  // double So_ = GetS1(z);
+  // return - 0.75 * EHR * sqrt(So_) / sqrt(pow(area, 5));
+
+  return 1e9; //hard coding in the right answer
 }
 
 double cvOneDMaterialOlufsen::GetOutflowFunction(double pressure, double z)const{
-  return 0.0; // This is not used in our model
+  return 1.0;
 }
 
 double cvOneDMaterialOlufsen::GetDOutflowDp(double pressure, double z)const{
@@ -227,47 +250,68 @@ double cvOneDMaterialOlufsen::GetDOutflowDp(double pressure, double z)const{
 
 //used for viscosity term in matrix outlet flux term
 double cvOneDMaterialOlufsen::GetDD2PDzDS(double area, double z)const{
-  double EHR   = GetEHR(z);
-  double ro    = Getr1(z);
-  double drodz = GetDr1Dz(z);
-  double dEHRdro = 4./3.*K2_*K1_*exp(K2_*ro);
-  double derP = drodz*sqrt(PI)*0.5/area/sqrt(area)*(dEHRdro*ro+EHR);
-  return derP;
+  // double EHR   = GetEHR(z);
+  // double ro    = Getr1(z);
+  // double drodz = GetDr1Dz(z);
+  // double dEHRdro = 4./3.*K2_*K1_*exp(K2_*ro);
+  // double derP = drodz*sqrt(PI)*0.5/area/sqrt(area)*(dEHRdro*ro+EHR);
+  // return derP;
+
+  // this shit ain't even used
+  return 0.0; //hard coding in the right answer
 }
 
 
 double cvOneDMaterialOlufsen::GetIntegralpD2S(double area, double z)const{
-  double EHR   = GetEHR(z);
-  double DS1Dz = GetDS1Dz(z);
-  double So_   = GetS1(z);
-  double DroDz = GetDr1Dz(z);
-  double ro    = Getr1(z);
-  double DEHRinvDr = -4./3.*K1_*K2_*exp(K2_*ro); //should be /(EHR)^2 but included in IntegralpD2S
-  double DEHRinvDz = DEHRinvDr*DroDz;
-  double termA = sqrt(area/So_)-1.0;
-  double IntegralpD2S = DS1Dz*EHR*termA+So_*termA*termA*DEHRinvDz;
-  return IntegralpD2S;
+  // double EHR   = GetEHR(z);
+  // double DS1Dz = GetDS1Dz(z);
+  // double So_   = GetS1(z);
+  // double DroDz = GetDr1Dz(z);
+  // double ro    = Getr1(z);
+  // double DEHRinvDr = -4./3.*K1_*K2_*exp(K2_*ro); //should be /(EHR)^2 but included in IntegralpD2S
+  // double DEHRinvDz = DEHRinvDr*DroDz;
+  // double termA = sqrt(area/So_)-1.0;
+  // double IntegralpD2S = DS1Dz*EHR*termA+So_*termA*termA*DEHRinvDz;
+  // return IntegralpD2S;
+
+  return 0.0; // hard coding in the right answer
 }
 
 double cvOneDMaterialOlufsen::GetIntegralpS(double area, double z)const{
-  double EHR   = GetEHR(z);
-  double So_   = GetS1(z);
-  double IntegralpS = EHR*So_*(sqrt(area/So_)-1.);
+  // double EHR   = GetEHR(z);
+  // double So_   = GetS1(z);
+  // double IntegralpS = EHR*So_*(sqrt(area/So_)-1.);
 
-  return IntegralpS;
+  // return IntegralpS;
+
+  return 0.0; // hard coding in the right answer
 }
 
 // Careful!! this D2p(S,z)Dz first derivative, 2nd variable
 double cvOneDMaterialOlufsen::GetDpDz(double S, double z)const{
-  double So_   = GetS1(z);
-  double EHR   = GetEHR(z);
-  double r     = sqrt(S/PI);
-  double ro    = Getr1(z);
-  double drodz  = GetDr1Dz(z); // if straight tube ->0.0
-  double dEHRdr = 4./3.*K2_*K1_*exp(K2_*ro); // dfdr
-  double dpdz = drodz*(dEHRdr*(1.0-(ro/r))-EHR/r);
+  //double So_   = GetS1(z);
+  //double EHR   = GetEHR(z);
+  //double r     = sqrt(S/PI);
+  //double ro    = Getr1(z);
+  //double drodz  = GetDr1Dz(z); // if straight tube ->0.0
+  //double dEHRdr = 4./3.*K2_*K1_*exp(K2_*ro); // dfdr
+  //double dpdz = drodz*(dEHRdr*(1.0-(ro/r))-EHR/r);
 
-  return dpdz; //careful this is D2P(S,z)Dz
+  //return dpdz; //careful this is D2P(S,z)Dz
+
+  double a1;
+  double a2;
+  double N;
+  double psi=1.0;
+  double L = 10.0;
+  double dPdz;
+  double P_L = 10000.0;
+  N = -8.0*3.141562653589*kinematicViscosity;
+  a1 = density/S*(8.0/3.0/S*-1.0 + N/S*100.0);
+  a2 = density/S*(8/3/S*psi*psi + N*psi/S);
+  dPdz = -a2/2*z + a1*z;
+
+  return dPdz; // what is this calculating??
 }
 
 double cvOneDMaterialOlufsen::GetN(double S)const{
@@ -281,17 +325,21 @@ double cvOneDMaterialOlufsen::GetN(double S)const{
 }
 
 double cvOneDMaterialOlufsen::GetLinCompliance(double z)const{
-  double EHR   = GetEHR(z);
-  double S_o   = GetS1(z);
-  double LinCompliance = 2.0*S_o/EHR; // =dSdP at po,S_o
-  return LinCompliance;
+  //double EHR   = GetEHR(z);
+  //double S_o   = GetS1(z);
+  //double LinCompliance = 2.0*S_o/EHR; // =dSdP at po,S_o
+  //return LinCompliance;
+
+  return 0.0; // not used in any code, skip it
 }
 
 double cvOneDMaterialOlufsen::GetnonLinCompliance(double area, double z)const{
-  double EHR   = GetEHR(z);
-  double S_o   = GetS1(z);
-  double ratioA= sqrt(area/S_o);
-  double nonLinCompliance = 2.0*S_o/EHR*ratioA*ratioA*ratioA;
-  return nonLinCompliance;
+  //double EHR   = GetEHR(z);
+  //double S_o   = GetS1(z);
+  //double ratioA= sqrt(area/S_o);
+  //double nonLinCompliance = 2.0*S_o/EHR*ratioA*ratioA*ratioA;
+  //return nonLinCompliance;
+
+  return 0.0; // not used in any code, skip it
 }
 

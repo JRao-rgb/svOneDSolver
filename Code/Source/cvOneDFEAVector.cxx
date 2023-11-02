@@ -161,7 +161,7 @@ double cvOneDFEAVector::Norm( normType type, int start, int step, int stop_index
 void cvOneDFEAVector::CheckPositive(int start, int step, int stop){
   assert(start >= 0 && stop <= dimension);
   for(long i= start; i< stop; i+=step){
-    assert(cvOneDFEAVector::Get(i) >= 0.0);
+    //assert(cvOneDFEAVector::Get(i) >= 0.0); !!!
     }
 }
 

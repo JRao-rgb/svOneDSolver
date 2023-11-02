@@ -276,6 +276,11 @@ void cvOneDMthSegmentModel::FormElement(long element,
 	cvOneDSubdomain *sub = subdomainList[ith];
 	cvOneDMaterial* material = sub->GetMaterial();
 
+	std::cout << "FormElement called with the following inputs:" << std::endl;
+	std::cout << "  element: " << element << ", ith: " << ith;
+	std::cout << "  get_vec: " << get_vec << std::endl;
+	std::cout << "  get_mat" << get_mat << std::endl;
+
 	// get material properties
 	strcpy(propName,"density");
 	double density = material->GetProperty(propName);
@@ -323,14 +328,15 @@ void cvOneDMthSegmentModel::FormElement(long element,
 	Q[0] = currSolution->Get(eqNumbers[1]);
 	S[1] = currSolution->Get(eqNumbers[2]);
 	Q[1] = currSolution->Get(eqNumbers[3]);
-
+	//std::cout << "Flowrate: " << Q[0] << " " << Q[1] << "\t" ;
+	
 	double Sn[2];
 	double Qn[2];
 	Sn[0] = prevSolution->Get(eqNumbers[0]);
 	Qn[0] = prevSolution->Get(eqNumbers[1]);
 	Sn[1] = prevSolution->Get(eqNumbers[2]);
 	Qn[1] = prevSolution->Get(eqNumbers[3]);
-
+	
 	// set the equation numbers for the element matrix
 	elementMatrix->SetEquationNumbers( eqNumbers);
 	elementMatrix->Clear();
@@ -369,7 +375,9 @@ void cvOneDMthSegmentModel::FormElement(long element,
 		// more values coming from constitutive equations
 		// IV added IntegralpS and IntegralpD2S 01-24-03
 		double pressure = material->GetPressure( U[0], z);
+		//std::cout << "Pressure: " << pressure << "\t";
 		double Outflow = material->GetOutflowFunction( pressure, z);
+		//std::cout << "Outflow: " << Outflow << std::endl;
 		double DpDS = material->GetDpDS( U[0], z);
 		double DpDz = material->GetDpDz( U[0], z);
 		double IntegralpS = material->GetIntegralpS( U[0], z); //0.0;

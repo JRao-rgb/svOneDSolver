@@ -39,7 +39,7 @@ int  cvOneDGlobal::vtkOutputType = 0; // Default Multiple Files
 int  cvOneDGlobal::CONSERVATION_FORM = 0;
 
 // DEBUG MODE
-bool cvOneDGlobal::debugMode = false;
+bool cvOneDGlobal::debugMode = true;
 
 // CURRENT MODEL INDEX
 long cvOneDGlobal::currentModel = -1;

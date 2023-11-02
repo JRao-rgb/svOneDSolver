@@ -1442,7 +1442,7 @@ void cvOneDBFSolver::GenerateSolution(void){
         ofsRHS.close();
         ofsLHS.close();
         printf("ECCOLO\n");
-        getchar();
+        //getchar();
       }
 
       mathModels[0]->ApplyBoundaryConditions();
