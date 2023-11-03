@@ -218,7 +218,7 @@ double cvOneDMaterialOlufsen::GetD2pDS2(double area, double z)const{
 }
 
 double cvOneDMaterialOlufsen::GetOutflowFunction(double pressure, double z)const{
-  return 0.0; // This is not used in our model
+  return 1.0; // This is not used in our model
 }
 
 double cvOneDMaterialOlufsen::GetDOutflowDp(double pressure, double z)const{

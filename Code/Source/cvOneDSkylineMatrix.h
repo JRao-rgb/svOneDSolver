@@ -63,7 +63,6 @@ class cvOneDSkylineMatrix: public cvOneDFEAMatrix{
     cvOneDSkylineMatrix( long dim, long* pos, const char* tit = "matrix");
     virtual ~cvOneDSkylineMatrix();
     
-
     long GetPosition( long row, long column) const;
     long* GetPosition();
     double* GetDiagonalEntries();

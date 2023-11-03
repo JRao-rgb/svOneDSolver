@@ -91,6 +91,14 @@ double cot(double x){
 
 void cvOneDMthSegmentModel::N_MinorLoss(long ith, double* N_vec){
 
+// ------------------------------------------------------------
+ofstream debugPrintOut;
+debugPrintOut.open ("data.txt", ios::app);
+
+debugPrintOut << "-- function cvOneDMthSegmentModel::N_MinorLoss called with the following inputs:" << std::endl;
+debugPrintOut << "ith: " << ith << ", N_vec" << *N_vec << std::endl;
+// ------------------------------------------------------------
+
   char propName[256];
 
   cvOneDSubdomain *sub = subdomainList[ith];
@@ -201,10 +209,24 @@ void cvOneDMthSegmentModel::N_MinorLoss(long ith, double* N_vec){
   }
 
   // cout << " -N " << -N << " Q(1) :"<< Q[1] << endl;
+debugPrintOut << "-- function cvOneDMthSegmentModel::N_MinorLoss over." << std::endl;
+debugPrintOut.close();
+
 }
 
 
 void cvOneDMthSegmentModel::FormElement_FD(long element, long ith, cvOneDFEAVector* elementVector, cvOneDDenseMatrix* elementMatrix){
+	// ------------------------------------------------------------
+	ofstream debugPrintOut;
+	debugPrintOut.open ("data.txt", ios::app);
+	
+	debugPrintOut << "-- function cvOneDMthSegmentModel::FormElement_FD called with the following inputs:" << std::endl;
+	debugPrintOut << "element: " << element << ", ith: " << ith << std::endl;
+	debugPrintOut << "elementVector: " << std::endl;
+	elementVector->print(debugPrintOut);
+	debugPrintOut.close();
+	// ------------------------------------------------------------
+
 	// number of unknowns per element
 	const int n_eq = 4;
 	
@@ -235,6 +257,12 @@ void cvOneDMthSegmentModel::FormElement_FD(long element, long ith, cvOneDFEAVect
 	cvOneDFEAVector elementVector_ith(4, "eRhsVector_ith");
 	elementVector_ith.SetEquationNumbers(eqNumbers);
 	
+	// ------------------------------------------------------
+	debugPrintOut.open ("data.txt", ios::app);
+	debugPrintOut << "Printing the finite difference:" << std::endl;
+	debugPrintOut.close();
+	// ------------------------------------------------------
+
 	// calculate finite difference vector for each unknown
 	for (int i=0; i<n_eq; i++){
 		// reset element vector
@@ -249,20 +277,37 @@ void cvOneDMthSegmentModel::FormElement_FD(long element, long ith, cvOneDFEAVect
 		
 		// calculate residual with variation
 		FormElement(element, ith, &elementVector_ith, &elementMatrix_dummy, true, false);
-		
+
 		// calculate finite difference
 		for (int j=0; j<n_eq; j++){
 			// tangent matrix is derivative of negative residual
 			double diff = - (elementVector_ith.Get(j) - elementVector->Get(j)) / eps;
 			
+			// --------------------------------------------------
+			debugPrintOut.open ("data.txt", ios::app);
+			debugPrintOut << "Calculated difference: " << diff << std::endl;
+			debugPrintOut.close();
+			// --------------------------------------------------
+
 			// assign finite difference to tangent matrix
 			elementMatrix->Set(j, i, diff);
 		}
+
+		// --------------------------------------------------
+		debugPrintOut << std::endl;
+		// --------------------------------------------------
+
 	}
 	
 	// restore original solution
 	for (int i=0; i<n_eq; i++)
 		currSolution->Set(eqNumbers[i], U_orig[i]);
+	
+	// --------------------------------------------------
+	debugPrintOut.open ("data.txt", ios::app);
+	debugPrintOut << "-- function cvOneDMthSegmentModel::FormElement_FD over" << std::endl;
+	debugPrintOut.close();
+	// --------------------------------------------------
 }
 
 void cvOneDMthSegmentModel::FormElement(long element, 
@@ -272,6 +317,17 @@ void cvOneDMthSegmentModel::FormElement(long element,
 										bool get_vec,
 										bool get_mat){
 	char propName[256];
+
+	// -------------------------------------------------------------------
+	ofstream debugPrintOut;
+	debugPrintOut.open ("data.txt", ios::app);
+
+	debugPrintOut << "-- Function: cvOneDMthSegmentModel::FormElement with the following inputs: --" << std::endl;
+	debugPrintOut << "element: " << element << ", ith: " << ith << std::endl;
+	debugPrintOut << "elementVector: " << std::endl;
+	elementVector->print(debugPrintOut);
+	// -------------------------------------------------------------------
+
 	//Framework
 	cvOneDSubdomain *sub = subdomainList[ith];
 	cvOneDMaterial* material = sub->GetMaterial();
@@ -331,6 +387,12 @@ void cvOneDMthSegmentModel::FormElement(long element,
 	Sn[1] = prevSolution->Get(eqNumbers[2]);
 	Qn[1] = prevSolution->Get(eqNumbers[3]);
 
+	// ------------------------------------------------------
+	debugPrintOut << "Printing elements of currSolution and prevSolution: {S[0],Q[0],S[1],Q[1]}" << std::endl;
+	debugPrintOut << "currSolution's elements: " <<S[0]<<","<<Q[0]<<","<<S[1]<<","<<Q[1]<<std::endl;
+	debugPrintOut << "prevSolution's elements: " <<Sn[0]<<","<<Qn[0]<<","<<Sn[1]<<","<<Qn[1]<<std::endl;
+	// ------------------------------------------------------
+
 	// set the equation numbers for the element matrix
 	elementMatrix->SetEquationNumbers( eqNumbers);
 	elementMatrix->Clear();
@@ -374,6 +436,13 @@ void cvOneDMthSegmentModel::FormElement(long element,
 		double DpDz = material->GetDpDz( U[0], z);
 		double IntegralpS = material->GetIntegralpS( U[0], z); //0.0;
 		double IntegralpD2S = 0;
+
+
+		// ------------------------------------------------------
+		debugPrintOut << "Printing some parameters that depend on our unknowns:" << std::endl;
+		debugPrintOut << "pressure: " << pressure << "\tOutflow: " << Outflow << "\tDpDs" << DpDS;
+		debugPrintOut << "\tDpDz: " << DpDz << "\tIntegralpS: " << IntegralpS << "IntegralpD2S: " << IntegralpD2S << std::endl;
+		// ------------------------------------------------------
 
 		if(cvOneDGlobal::CONSERVATION_FORM==1) {
 			IntegralpD2S = material->GetIntegralpD2S( U[0], z); //0.0;
@@ -425,6 +494,24 @@ void cvOneDMthSegmentModel::FormElement(long element,
 		double modA[4];
 		double modC[4];
 
+		// ------------------------------------------------------
+		debugPrintOut << "Printing various matrices that were defined in the paper:" << std::endl;
+		debugPrintOut << "A:\t" << "|" << A[0] << "\t" << A[1] << "\t|" << std::endl;
+		debugPrintOut << "\t" << "|" << A[2] <<  "\t" << A[3] << "\t|" << std::endl;
+		debugPrintOut << "C:\t" << "|" << C[0] << "\t" << C[1] << "\t|" << std::endl;
+		debugPrintOut << "\t" << "|" << C[2] <<  "\t" << C[3] << "\t|" << std::endl;
+		debugPrintOut << "K:\t" << "|" << 0.0 << "\t" << 0.0 << "\t|" << std::endl;
+		debugPrintOut << "\t" << "|" << 0.0 <<  "\t" << K22 << "\t|" << std::endl;
+		debugPrintOut << "G:\t" << "|" << G1 << "\t|" << std::endl;
+		debugPrintOut << "\t" << "|" << G2 <<  "\t|" << std::endl;
+		debugPrintOut << "CF:\t" << "|" << CF11 << "\t" << 0.0 << "\t|" << std::endl;
+		debugPrintOut << "\t" << "|" << CF21 <<  "\t" << CF22 << "\t|" << std::endl;
+		debugPrintOut << "F:\t" << "|" << F1 << "\t|" << std::endl;
+		debugPrintOut << "\t" << "|" << F2 <<  "\t|" << std::endl;
+		debugPrintOut << "GF:\t" << "|" << GF1 << "\t|" << std::endl;
+		debugPrintOut << "\t" << "|" << GF2 <<  "\t|" << std::endl;
+		// ------------------------------------------------------
+
 		if(STABILIZATION==1){
 			GetModulus(A, modA);
 			if(kinViscosity < SMALL_KINEMATIC_VISCOSITY){
@@ -450,6 +537,12 @@ void cvOneDMthSegmentModel::FormElement(long element,
 			tau[1] = -tau[1]/det;
 			tau[2] = -tau[2]/det;
 			tau[3] =  temp/det;
+
+			// ------------------------------------------------------
+			debugPrintOut << "tau:\t" << "|" << tau[0] << "\t" << tau[1] << "\t|" << std::endl;
+			debugPrintOut << "\t" << "|" << tau[2] << "\t" << tau[3] <<  "\t|" << std::endl;
+			// ------------------------------------------------------
+
 		}// end STABILIZATION
 
 		for( int a = 0; a < numberOfNodes; a++){
@@ -505,6 +598,12 @@ void cvOneDMthSegmentModel::FormElement(long element,
 
 				double r1 = rDG1 + rGLS1;
 				double r2 = rDG2 + rGLS2;
+
+				// ------------------------------------------------------
+				debugPrintOut << "Printing what I believe is the element-wise residuals:" << std::endl;
+				debugPrintOut << "|" << r1 << "\t|" << std::endl;
+				debugPrintOut << "|" << r2 << "\t|" << std::endl;
+				// ------------------------------------------------------
 
 				// now RHS= -residual , comment added by IV 01-24-03
 				elementVector->Add( 2*a  , -r1*jw);
@@ -567,6 +666,12 @@ void cvOneDMthSegmentModel::FormElement(long element,
 						k22 += deltaTime*auxa[3];
 
 					} // end stabilization
+
+					// ------------------------------------------------------
+					debugPrintOut << "Printing what I believe is the element-wise stiffness matrix:" << std::endl;
+					debugPrintOut << "|" << k11 << "\t" << k12 << "\t|" << std::endl;
+					debugPrintOut << "|" << k21 << "\t" << k22 << "\t|" << std::endl;
+					// ------------------------------------------------------
 
 					elementMatrix->Add( 2*a  , 2*b  , k11*jw);
 					elementMatrix->Add( 2*a  , 2*b+1, k12*jw);
@@ -687,4 +792,6 @@ void cvOneDMthSegmentModel::FormElement(long element,
 			}//end if no outletBC or Dirichlet
 		}//end   if(CONSERVATION_FORM)
 	}
+	debugPrintOut << "-- function cvOneDMthSegmentModel::FormElement over" << std::endl;
+	debugPrintOut.close();
 }

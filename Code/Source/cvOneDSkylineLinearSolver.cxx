@@ -76,9 +76,21 @@ void cvOneDSkylineLinearSolver::Solve(cvOneDFEAVector& sol){
   double* solution = sol.GetEntries();
  //count size and nnz
 
-
   SolNonSymSysSkyLine( KU, KL, KD, F, position, solution, numberOfEquations, 0, EPSILON);
   SolNonSymSysSkyLine( KU, KL, KD, F, position, solution, numberOfEquations, 1, EPSILON);
+
+  // ------------------------------------------------------------
+  ofstream debugPrintOut;
+  debugPrintOut.open ("data.txt", ios::app);
+
+  debugPrintOut << "-- function cvOneDSkylineLinearSolver::SolNonSymSysSkyLine called with the following inputs:" << std::endl;
+  debugPrintOut << "lhsMatrix:" << std::endl;
+  lhsMatrix->print(debugPrintOut);
+  debugPrintOut << "rhsVector:" << std::endl;
+  rhsVector->print(debugPrintOut);
+  debugPrintOut << "-- function cvOneDSkylineLinearSolver::SolNonSymSysSkyLine over.";
+  debugPrintOut.close();
+  // ------------------------------------------------------------
 }
 
 cvOneDFEAMatrix* cvOneDSkylineLinearSolver::GetLHS(){

@@ -1399,16 +1399,25 @@ void cvOneDBFSolver::GenerateSolution(void){
 
   // Global Solution Loop
   long q=1;
-  double checkMass = 0;
-  int numberOfCycle = 1;
-  long iter_total = 0;
-
-  // Time stepping
-  for(long step = 1; step <= maxStep; step++){
-    increment->Clear();
+  double checkMass = 0;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
     for(i = 0; i < numMath; i++){
       mathModels[i]->TimeUpdate(currentTime, deltaTime);
     }
+
+    // ---------------------------------------------------------
+    ofstream debugPrintOut;
+    debugPrintOut.open ("data.txt", ios::app);
+
+    debugPrintOut << "::::    ::: :::::::::: :::       :::  ::::::::::: ::::::::::: ::::    ::::  ::::::::::   ::::::::  ::::::::::: :::::::::: :::::::::  " << std::endl;
+    debugPrintOut << ":+:+:   :+: :+:        :+:       :+:      :+:         :+:     +:+:+: :+:+:+ :+:         :+:    :+:     :+:     :+:        :+:    :+: " << std::endl;
+    debugPrintOut << ":+:+:+  +:+ +:+        +:+       +:+      +:+         +:+     +:+ +:+:+ +:+ +:+         +:+            +:+     +:+        +:+    +:+ " << std::endl;
+    debugPrintOut << "+#+ +:+ +#+ +#++:++#   +#+  +:+  +#+      +#+         +#+     +#+  +:+  +#+ +#++:++#    +#++:++#++     +#+     +#++:++#   +#++:++#+  " << std::endl;
+    debugPrintOut << "+#+  +#+#+# +#+        +#+ +#+#+ +#+      +#+         +#+     +#+       +#+ +#+                +#+     +#+     +#+        +#+        " << std::endl;
+    debugPrintOut << "#+#   #+#+# #+#         #+#+# #+#+#       #+#         #+#     #+#       #+# #+#         #+#    #+#     #+#     #+#        #+#        " << std::endl;
+    debugPrintOut << "###    #### ##########   ###   ###        ###     ########### ###       ### ##########   ########      ###     ########## ###        " << std::endl;
+    debugPrintOut << "the current step is: " << step << std::endl;
+    debugPrintOut.close();
+    // ---------------------------------------------------------
 
     // Newton-Raphson Iterations...
     int iter = 0;
@@ -1474,6 +1483,19 @@ void cvOneDBFSolver::GenerateSolution(void){
         cout << "time: " << ((float)(tend_iter-tstart_iter))/CLOCKS_PER_SEC << endl;
         break;
       }
+
+      // ---------------------------------------------------------
+      ofstream debugPrintOut;
+      debugPrintOut.open ("data.txt", ios::app);
+      
+      debugPrintOut << std::endl;
+      debugPrintOut << "- - - - - - - - - - - - - - - - FINISHED NEWTON STEP - - - - - - - - - - - - - - - -  " << std::endl;
+      debugPrintOut << std::endl;
+      debugPrintOut << "    iter: " << std::to_string(iter) << " ";
+      debugPrintOut << "normf: " << normf << " ";
+      debugPrintOut << "norms: " << norms << " ";
+      debugPrintOut.close();
+      // ---------------------------------------------------------
 
       // Add increment
       increment->Clear();
