@@ -1332,14 +1332,14 @@ void cvOneDBFSolver::CalcInitProps(long ID){
   double So = subdomainList[ID] -> GetInitInletS();
   double Sn = subdomainList[ID] -> GetInitOutletS();
   for( long node = 0; node < subdomainList[ID]->GetNumberOfNodes(); node++){
-  double zn = subdomainList[ID]->GetNodalCoordinate( node);
-  long eqNumbers[2];
-  mathModels[0]->GetNodalEquationNumbers(node, eqNumbers, ID);
+    double zn = subdomainList[ID]->GetNodalCoordinate( node);
+    long eqNumbers[2];
+    mathModels[0]->GetNodalEquationNumbers(node, eqNumbers, ID);
 
-  // Linear Interpolation
-  double zi = (zn - segLen)/(0.0-segLen);
-  double Si = (zi*(So - Sn)) + Sn;
-  (*previousSolution)[eqNumbers[0]] = Si;
+    // Linear Interpolation
+    double zi = (zn - segLen)/(0.0-segLen);
+    double Si = (zi*(So - Sn)) + Sn;
+    (*previousSolution)[eqNumbers[0]] = Si;
 
     if(node == 0){
       (*previousSolution)[eqNumbers[1]] = Qo;
@@ -1399,7 +1399,15 @@ void cvOneDBFSolver::GenerateSolution(void){
 
   // Global Solution Loop
   long q=1;
-  double checkMass = 0;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
+  double checkMass = 0;
+  int numberOfCycle = 1;
+  long iter_total = 0;
+
+  // Time stepping
+  for(long step = 1; step <= maxStep; step++){
+    increment->Clear();
+
+    double checkMass = 0;
     for(i = 0; i < numMath; i++){
       mathModels[i]->TimeUpdate(currentTime, deltaTime);
     }
@@ -1429,7 +1437,7 @@ void cvOneDBFSolver::GenerateSolution(void){
       cout << "**** Time cycle " << numberOfCycle++ << endl;
     }
     currentTime += deltaTime;
-
+EquationInitialize
     while(true){
       tstart_iter=clock();
 

@@ -91,13 +91,13 @@ double cot(double x){
 
 void cvOneDMthSegmentModel::N_MinorLoss(long ith, double* N_vec){
 
-// ------------------------------------------------------------
-ofstream debugPrintOut;
-debugPrintOut.open ("data.txt", ios::app);
+	// ------------------------------------------------------------
+	ofstream debugPrintOut;
+	debugPrintOut.open ("data.txt", ios::app);
 
-debugPrintOut << "-- function cvOneDMthSegmentModel::N_MinorLoss called with the following inputs:" << std::endl;
-debugPrintOut << "ith: " << ith << ", N_vec" << *N_vec << std::endl;
-// ------------------------------------------------------------
+	debugPrintOut << "-- function cvOneDMthSegmentModel::N_MinorLoss called with the following inputs:" << std::endl;
+	debugPrintOut << "ith: " << ith << ", N_vec" << *N_vec << std::endl;
+	// ------------------------------------------------------------
 
   char propName[256];
 
