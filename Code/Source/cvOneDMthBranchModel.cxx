@@ -115,6 +115,11 @@ void cvOneDMthBranchModel::FormLagrangeRHSbyQ(long ith, cvOneDFEAVector* rhsVect
   long lagOrigin;
   int currID = 0;
 
+  // JR 07-11-23: this is not used when there's only 1 branch?! How does it know?? How is RHS formed then??
+
+  std::cout << "jointList[ith]->getNumberOfInletSegments()" << jointList[ith]->getNumberOfInletSegments() << std::endl;
+  std::cout << "fdaklfjdsl;fjdaslfjsdal;kf" << std::endl;
+
   for(i = 0; i < jointList[ith]->getNumberOfInletSegments(); i++){
     currID = jointList[ith]->GetInletID(i);
     long numNodes = subdomainList[currID]->GetNumberOfNodes();

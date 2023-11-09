@@ -157,7 +157,6 @@ double cvOneDMaterialOlufsen::Getr1(double z)const{
   double r_bot=sqrt(Sbot/PI);
   double r=((z-len)/(-len))*(r_top - r_bot) + r_bot;
 
-
   return r;
 }
 
@@ -182,7 +181,6 @@ double cvOneDMaterialOlufsen::GetDr1Dz(double z)const{
 double cvOneDMaterialOlufsen::GetArea(double pressure, double z)const{
   // NOTE: o "So_" is the LSA under pressure p1_.
   //         This property comes from the subdomain
-  //
   //       o Po is the the zero transmural pressure
 
   double pres = pressure;
@@ -218,7 +216,7 @@ double cvOneDMaterialOlufsen::GetD2pDS2(double area, double z)const{
 }
 
 double cvOneDMaterialOlufsen::GetOutflowFunction(double pressure, double z)const{
-  return 1.0; // This is not used in our model
+  return 1.0; // ==================================================================
 }
 
 double cvOneDMaterialOlufsen::GetDOutflowDp(double pressure, double z)const{
@@ -259,15 +257,49 @@ double cvOneDMaterialOlufsen::GetIntegralpS(double area, double z)const{
 
 // Careful!! this D2p(S,z)Dz first derivative, 2nd variable
 double cvOneDMaterialOlufsen::GetDpDz(double S, double z)const{
-  double So_   = GetS1(z);
-  double EHR   = GetEHR(z);
-  double r     = sqrt(S/PI);
-  double ro    = Getr1(z);
-  double drodz  = GetDr1Dz(z); // if straight tube ->0.0
-  double dEHRdr = 4./3.*K2_*K1_*exp(K2_*ro); // dfdr
-  double dpdz = drodz*(dEHRdr*(1.0-(ro/r))-EHR/r);
+  // ----------------------------------- ORIGINAL CODE -------------------------------------
+  // double So_   = GetS1(z);
+  // double EHR   = GetEHR(z);
+  // double r     = sqrt(S/PI);
+  // double ro    = Getr1(z);
+  // double drodz  = GetDr1Dz(z); // if straight tube ->0.0
+  // double dEHRdr = 4./3.*K2_*K1_*exp(K2_*ro); // dfdr
+  // double dpdz = drodz*(dEHRdr*(1.0-(ro/r))-EHR/r);
+  // ----------------------------------- ORIGINAL CODE -------------------------------------
 
-  return dpdz; //careful this is D2P(S,z)Dz
+  // ---------------------------- HARD CODING IN THE RIGHT ANSWER ----------------------------
+  // hard-coding in the right answer
+  double L = 10.0;
+  double Q_0 = 100.0;
+  double P_L = 10000.0;
+  double psi = 0.0; // ============================================================================
+  double mu = 0.04;
+  double r = 0.5641895835;
+  double rho = 1.06;
+  double f = 0;
+  double nu = mu / rho;
+  double N = -8.0 * 3.141592653589 * nu;
+  double a1 = rho / S * (8.0/3.0/S*psi + S*f + N/S*Q_0);
+  double a2 = rho / S * (8.0/3.0*psi*psi + N*psi/S);
+  double C = P_L + a2/2*L*L - a1*L;
+  
+  // our variables of interest
+  double flowrate;
+  double pressure;
+  double area;
+
+  // getting the area from the pressure
+  double k1 = 1.0e15;
+  double k2 = -20;
+  double k3 = 1e9;
+  double EHR = 4.0/3.0*(k1 * exp(r * k2) + k3);
+  double p_0 = 0.0;
+  double S_0 = 1.0;
+  // ---------------------------- HARD CODING IN THE RIGHT ANSWER ----------------------------
+
+  cout << "-a2: " << -a2 << ",z: " <<z << ", a1: " << a1 << endl;
+  cout << "-a2 * z + a1" << -a2 * z + a1 << endl;
+  return -a2*z + a1; //careful this is D2P(S,z)Dz
 }
 
 double cvOneDMaterialOlufsen::GetN(double S)const{

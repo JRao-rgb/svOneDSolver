@@ -76,9 +76,17 @@ void cvOneDMthSegmentModel::FormNewton(cvOneDFEAMatrix* lhsMatrix, cvOneDFEAVect
 			// analytical jacobian (missing terms)
 //			FormElement(element, i, &elementVector, &elementMatrix, true, true);
 
+			// JR 07-11-23: for debugging. Ignore these lines.
+			// cout << "rhsVector before the FormElement_FD function: " << endl;
+			// rhsVector->print(cout);
+			// cout << "elementVector before the FormElement_FD function: " << endl;
+			// elementVector.print(cout);
+
 			// finite difference jacobian
 			FormElement_FD(element, i, &elementVector, &elementMatrix);
 			rhsVector->Add(elementVector);
+			cout << "Printing RHS in the FormNewton function; i: " << (long)i << "\telement: " << element << endl;
+			rhsVector->print(cout);
 			lhsMatrix->Add(elementMatrix);
 		}
 	}
@@ -90,6 +98,7 @@ double cot(double x){
 }
 
 void cvOneDMthSegmentModel::N_MinorLoss(long ith, double* N_vec){
+	// JR 07-11-23: this function does not seem to be used when there's no minor loss. Ignore for now
 
 	// ------------------------------------------------------------
 	ofstream debugPrintOut;
@@ -121,7 +130,8 @@ void cvOneDMthSegmentModel::N_MinorLoss(long ith, double* N_vec){
 	  N_vec[i] = 0.0;
 
   if(minorLoss == MinorLossScope::NONE ){//|| minorLoss != MinorLossScope::STENOSIS ){
-	  return;
+	  // std::cout << "not computing minor loss!" << std::endl;
+ 	  return;
   }
 
   //   In case of branch, previous seg might not be adjacent seg
@@ -269,19 +279,20 @@ void cvOneDMthSegmentModel::FormElement_FD(long element, long ith, cvOneDFEAVect
 		elementVector_ith.Clear();
 
 		// restore original solution
-		for (int j=0; j<n_eq; j++)
-			currSolution->Set(eqNumbers[j], U_orig[j]);
-		
-		// add variation in i-th direction
-		currSolution->Add(eqNumbers[i], eps);
-		
-		// calculate residual with variation
-		FormElement(element, ith, &elementVector_ith, &elementMatrix_dummy, true, false);
+		for (int j=0; j<n_eq; j++) currSolution->Set(eqNumbers[j], U_orig[j]);
 
 		// calculate finite difference
 		for (int j=0; j<n_eq; j++){
 			// tangent matrix is derivative of negative residual
 			double diff = - (elementVector_ith.Get(j) - elementVector->Get(j)) / eps;
+			
+			// add variation in i-th direction
+			// JR 07-11-23: DON'T FORGET to uncomment the line below. I'm using it to cause a seg fault which halts the code and allows me to debug.
+			// currSolution->Add(eqNumbers[i], eps);
+			
+			// calculate residual with variation
+			// JR 07-11-23: DON'T FORGET to uncomment the line below. I'm using it to cause a seg fault which halts the code and allows me to debug.
+			// FormElement(element, ith, &elementVector_ith, &elementMatrix_dummy, true, false);
 			
 			// --------------------------------------------------
 			debugPrintOut.open ("data.txt", ios::app);
@@ -437,11 +448,11 @@ void cvOneDMthSegmentModel::FormElement(long element,
 		double IntegralpS = material->GetIntegralpS( U[0], z); //0.0;
 		double IntegralpD2S = 0;
 
-
 		// ------------------------------------------------------
 		debugPrintOut << "Printing some parameters that depend on our unknowns:" << std::endl;
 		debugPrintOut << "pressure: " << pressure << "\tOutflow: " << Outflow << "\tDpDs" << DpDS;
-		debugPrintOut << "\tDpDz: " << DpDz << "\tIntegralpS: " << IntegralpS << "IntegralpD2S: " << IntegralpD2S << std::endl;
+		debugPrintOut << "\tDpDz: " << DpDz << "\tIntegralpS: " << IntegralpS << "IntegralpD2S: " << IntegralpD2S;
+		debugPrintOut << "\tz: " << z << "\tquadPoints: " << quadPoints << std::endl;
 		// ------------------------------------------------------
 
 		if(cvOneDGlobal::CONSERVATION_FORM==1) {
@@ -455,10 +466,12 @@ void cvOneDMthSegmentModel::FormElement(long element,
 		//    K11 = 0.0  K12 = 0.0  K21 = 0.0
 		// IV 01-24-03, used only for the stabilization term
 		double aux = U[1]/U[0];        // aux = Q/S
+		double A11 = 0.0;
 	    double A12 = 1.0;
 		double A21 = -(1.0+delta)*aux*aux+U[0]/density*DpDS;
 		double A22 = 2.0*(1.0+delta)*aux;//why??
 		double C11 = - Outflow/U[0];
+		double C12 = 0.0;
 		double C21 = -1.0/density*DpDz;
 		double C22 = N/U[0];
 		double K22 = kinViscosity;
@@ -554,8 +567,13 @@ void cvOneDMthSegmentModel::FormElement(long element,
 				if(cvOneDGlobal::CONSERVATION_FORM){
 					// IV formulation 01-31-03
 					rDG1 = deltaTime*(DxShape[a]*F1+shape[a]*GF1)-shape[a]*(U[0]-Un[0]);
+					// std::cout << "rDG1: " << rDG1 << "\tDxShape[a]: " << DxShape[a] << "\tF1: " << F1;
+					// std::cout << "\tshape[a]: " << shape[a] << "\tGF1: " << GF1 << std::endl;
 					// GF2 contains NNN
 					rDG2 = deltaTime*(DxShape[a]*F2-DxShape[a]*K22*DxU[1]+shape[a]*GF2)-shape[a]*(U[1]-Un[1]);
+					// std::cout << "rDG2: " << rDG2 << "\tDxShape[a]: " << DxShape[a] << "\tF2: " << F2;
+					// std::cout << "\tDxShape[a]: " << DxShape[a] << "\tK22: " << K22 << "\tDxU[1]: " << DxU[1];
+					// std::cout << "\tshape[a]: " << shape[a] << "\tGF2: " << GF2 << std::endl;
 				}
 				else{
 					// Brooke's formulation that I am not using IV 01-31-03
@@ -567,18 +585,17 @@ void cvOneDMthSegmentModel::FormElement(long element,
 				double rGLS1 = 0.0;
 				double rGLS2 = 0.0;
 
-
 				if (STABILIZATION == 1){
 					// GLS terms
 					// create an auxiliary matrix to handle some of the terms
 					double auxa[4];
-					auxa[0] = -shape[a]*C11;    // A11 = 0.0
-					auxa[1] = DxShape[a];    // A12 = 1.0, C12 = 0.0
+					auxa[0] = DxShape[a]*A11-shape[a]*C11;    // A11 = 0.0
+					auxa[1] = DxShape[a]*A12-shape[a]*C12;    // A12 = 1.0, C12 = 0.0
 					auxa[2] = DxShape[a]*A21-shape[a]*C21;
 					auxa[3] = DxShape[a]*A22-shape[a]*C22;
 
 					double auxb[2];
-					auxb[0] = DxU[1]-G1;
+					auxb[0] = A11*DxU[0]+A12*DxU[1]-G1;
 					// G2 contains NNN
 					auxb[1] = A21*DxU[0]+A22*DxU[1]-G2;
 
@@ -600,19 +617,23 @@ void cvOneDMthSegmentModel::FormElement(long element,
 				double r2 = rDG2 + rGLS2;
 
 				// ------------------------------------------------------
-				debugPrintOut << "Printing what I believe is the element-wise residuals:" << std::endl;
+				debugPrintOut << "Printing what I believe is the node-wise residuals:" << std::endl;
 				debugPrintOut << "|" << r1 << "\t|" << std::endl;
 				debugPrintOut << "|" << r2 << "\t|" << std::endl;
 				// ------------------------------------------------------
 
 				// now RHS= -residual , comment added by IV 01-24-03
-				elementVector->Add( 2*a  , -r1*jw);
+				cout << "(Line 620 ish) elementVector->Add( 2*a  , -r1*jw): " << " \t[VERIFIED BY PYTHON!]"<< endl;
+				cout << "a: " << (long)a << ", -r1: " << -r1 << ", jw: " << jw << " \t[VERIFIED BY PYTHON!]"<< endl;
+				cout << "(Line 620 ish) elementVector->Add( 2*a+1  , -r2*jw): " << " \t[VERIFIED BY PYTHON!]"<< endl;
+				cout << "a: " << (long)a << ", -r2: " << -r2 << ", jw: " << jw << " \t[VERIFIED BY PYTHON!]"<< endl;
 				elementVector->Add( 2*a+1, -r2*jw);
+				elementVector->Add( 2*a  , -r1*jw);
 			}
-			
 
 			// linearization
-			if (get_mat){
+			if (get_mat){ // JR 07-11-2023: this just ISN'T called at any point! Why is it here?
+				std::cout << "getting mat" << std::endl;
 				for( int b = 0; b < numberOfNodes; b++){
 
 					// DG terms
@@ -668,7 +689,7 @@ void cvOneDMthSegmentModel::FormElement(long element,
 					} // end stabilization
 
 					// ------------------------------------------------------
-					debugPrintOut << "Printing what I believe is the element-wise stiffness matrix:" << std::endl;
+					debugPrintOut << "Printing what I believe is the element-wise stiffness matrix for the stabilization term" << std::endl;
 					debugPrintOut << "|" << k11 << "\t" << k12 << "\t|" << std::endl;
 					debugPrintOut << "|" << k21 << "\t" << k22 << "\t|" << std::endl;
 					// ------------------------------------------------------
@@ -710,8 +731,7 @@ void cvOneDMthSegmentModel::FormElement(long element,
 				}
 			}
 
-			if(bound==BoundCondTypeScope::NOBOUND||bound==BoundCondTypeScope::PRESSURE
-					||bound==BoundCondTypeScope::FLOW){
+			if(bound==BoundCondTypeScope::NOBOUND||bound==BoundCondTypeScope::PRESSURE||bound==BoundCondTypeScope::FLOW){
 				//Outlet flux term (at z=z_outlet) which is the linearized F-KU
 				if (element == (sub->GetNumberOfElements())-1){
 					double z = sub->GetOutletZ();
@@ -753,13 +773,16 @@ void cvOneDMthSegmentModel::FormElement(long element,
 				int a = 0;
 
 				double InletR1 = Q[0];
-				double InletR2 = (1.0+delta)*Q[0]*aux + IntegralpS/density;//without viscosity in flux
+				double InletR2 = (1.0+delta)*pow(Q[0],2)/S[1] + IntegralpS/density;//without viscosity in flux
+				cout << "(Line 770 ish) elementVector->Add( 2*a  , -InletR1*deltaTime): " << endl;
+				cout << "a: " << (long)a << ", -InletR1: " << -InletR1 << ", deltaTime: " << deltaTime << endl;
+				cout << "(Line 620 ish) elementVector->Add( 2*a+1  , -InletR2*deltaTime): " << endl;
+				cout << "a: " << (long)a << ", -InletR2: " << -InletR2 << ", deltaTime: " << deltaTime << endl;
 				elementVector->Add(2*a  , -InletR1*deltaTime);
 				elementVector->Add(2*a+1, -InletR2*deltaTime);
 			}// end inlet flux
 
-			if(bound==BoundCondTypeScope::NOBOUND||bound==BoundCondTypeScope::PRESSURE
-					||bound==BoundCondTypeScope::FLOW){
+			if(bound==BoundCondTypeScope::NOBOUND||bound==BoundCondTypeScope::PRESSURE||bound==BoundCondTypeScope::FLOW){
 				//If no outlet BC or Dirichlet outlet BC, compute the Outlet full flux term (at z=z_outlet) which is the linearized F-KU IV 02-03-03
 				if (element == (sub->GetNumberOfElements())-1){
 					double z = sub->GetOutletZ();//checked IV 02-03-03
@@ -783,9 +806,13 @@ void cvOneDMthSegmentModel::FormElement(long element,
 					// try linear downstream domain-Hughes
 					// double Cp=1.0;
 					/*  double Cp = material->GetLinCompliance(z);
-	        // double Cp = material->GetnonLinCompliance( S[1],z);//tried 02-13-03 worse results
-	        double OutletR2 = S[1]*S[1]/(2.0*density*Cp) - pow(material->GetArea(material->p1,z),2)/(2*density*Cp);//linear downstream domain-Hughes
+					double Cp = material->GetnonLinCompliance( S[1],z);//tried 02-13-03 worse results
+					double OutletR2 = S[1]*S[1]/(2.0*density*Cp) - pow(material->GetArea(material->p1,z),2)/(2*density*Cp);//linear downstream domain-Hughes
 					 */
+					cout << "(Line 800 ish) elementVector->Add( 2*a  , OutletR1*deltaTime): " << endl;
+					cout << "a: " << (long)a << ", OutletR1: " << OutletR1 << ", deltaTime: " << deltaTime << endl;
+					cout << "(Line 620 ish) elementVector->Add( 2*a+1  , OutletR2*deltaTime): " << endl;
+					cout << "a: " << (long)a << ", OutletR2: " << OutletR2 << ", deltaTime: " << deltaTime << endl;
 					elementVector->Add( 2*a  , OutletR1*deltaTime);
 					elementVector->Add( 2*a+1, OutletR2*deltaTime);
 				}//end outlet flux term

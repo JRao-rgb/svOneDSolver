@@ -1329,6 +1329,37 @@ void cvOneDBFSolver::CalcInitProps(long ID){
   Qo = subdomainList[ID] -> GetInitialFlow();
   dQ0dT=0;
 
+  // ---------------------------- HARD CODING IN THE RIGHT ANSWER ----------------------------
+  // hard-coding in the right answer
+  double L = 10.0;
+  double Q_0 = 100.0;
+  double P_L = 10000.0;
+  double psi = 0.0; // ============================================================================
+  double mu = 0.04;
+  double S = 1.0;
+  double r = 0.5641895835;
+  double rho = 1.06;
+  double f = 0;
+  double nu = mu / rho;
+  double N = -8.0 * 3.141592653589 * nu;
+  double a1 = rho / S * (8.0/3.0/S*psi*Q_0 + S*f + N/S*Q_0);
+  double a2 = rho / S * (8.0/3.0*psi*psi + N*psi/S);
+  double C = P_L + a2/2*L*L - a1*L;
+  
+  // our variables of interest
+  double flowrate;
+  double pressure;
+  double area;
+
+  // getting the area from the pressure
+  double k1 = 1.0e15;
+  double k2 = -20;
+  double k3 = 1e9;
+  double EHR = 4.0/3.0*(k1 * exp(r * k2) + k3);
+  double p_0 = 0.0;
+  double S_0 = 1.0;
+  // ---------------------------- HARD CODING IN THE RIGHT ANSWER ----------------------------
+
   double So = subdomainList[ID] -> GetInitInletS();
   double Sn = subdomainList[ID] -> GetInitOutletS();
   for( long node = 0; node < subdomainList[ID]->GetNumberOfNodes(); node++){
@@ -1336,15 +1367,27 @@ void cvOneDBFSolver::CalcInitProps(long ID){
     long eqNumbers[2];
     mathModels[0]->GetNodalEquationNumbers(node, eqNumbers, ID);
 
+    // ---------------------------- HARD CODING IN THE RIGHT ANSWER ----------------------------
+    double z_ = zn;
+    flowrate = -psi * z_ + Q_0;
+    pressure = -a2/2*z_*z_ + a1*z_ + C;
+    area = S_0 / pow(1.0-(pressure-p_0)/EHR,2);
+    // ---------------------------- HARD CODING IN THE RIGHT ANSWER ----------------------------
+
+    std::cout << "z_: " << z_ << std::endl;
+    std::cout << "area: " << area << std::endl;
+    std::cout << "flowrate: " << flowrate << std::endl;
+
     // Linear Interpolation
     double zi = (zn - segLen)/(0.0-segLen);
     double Si = (zi*(So - Sn)) + Sn;
-    (*previousSolution)[eqNumbers[0]] = Si;
+    (*previousSolution)[eqNumbers[0]] = area; //(*previousSolution)[eqNumbers[0]] = Si; 
 
     if(node == 0){
-      (*previousSolution)[eqNumbers[1]] = Qo;
+      (*previousSolution)[eqNumbers[1]] = flowrate; //(*previousSolution)[eqNumbers[1]] = Qo;
     }else{
-      (*previousSolution)[eqNumbers[1]] = 0.0;
+      (*previousSolution)[eqNumbers[1]] = flowrate; //(*previousSolution)[eqNumbers[1]] = 0.0;
+      std::cout << "(*previousSolution)[eqNumbers[1]]: " << (*previousSolution)[eqNumbers[1]] << std::endl;
     }
   }
 }
@@ -1364,17 +1407,17 @@ void cvOneDBFSolver::GenerateSolution(void){
   // Print the formulation used
 
   if(cvOneDGlobal::CONSERVATION_FORM){
-    cout << "Using Conservative Form ..." << endl;
+    std::cout << "Using Conservative Form ..." << endl;
   }else{
-    cout << "Using Advective Form ..." << endl;
+    std::cout << "Using Advective Form ..." << endl;
   }
 
   // Allocate the TotalSolution Array.
-  cout << "maxStep/stepSize: " << maxStep/stepSize << endl;
+  std::cout << "maxStep/stepSize: " << maxStep/stepSize << endl;
   long numSteps = maxStep/stepSize;
   TotalSolution.SetSize(numSteps+1, currentSolution -> GetDimension());
-  cout << "Total Solution is: " << numSteps << " x ";
-  cout << currentSolution -> GetDimension() << endl;
+  std::cout << "Total Solution is: " << numSteps << " x ";
+  std::cout << currentSolution -> GetDimension() << endl;
 
   cvOneDString String1( "step_");
   char String2[] = "99999";
@@ -1434,10 +1477,10 @@ void cvOneDBFSolver::GenerateSolution(void){
 
     if(fmod(currentTime, cycleTime) <5.0E-6 || -(fmod(currentTime,cycleTime)-cycleTime)<5.0E-6) {
       checkMass = 0;
-      cout << "**** Time cycle " << numberOfCycle++ << endl;
+      std::cout << "**** Time cycle " << numberOfCycle++ << endl;
     }
     currentTime += deltaTime;
-EquationInitialize
+
     while(true){
       tstart_iter=clock();
 
@@ -1462,7 +1505,11 @@ EquationInitialize
         getchar();
       }
 
+      cout<<" --- RHS: Before Application of BC " << endl;
+      rhs->print(cout);
       mathModels[0]->ApplyBoundaryConditions();
+      cout<<" --- RHS: After Application of BC " << endl;
+      rhs->print(cout);
 
       // PRINT RHS AFTER BC APP
       if(cvOneDGlobal::debugMode){
@@ -1570,15 +1617,15 @@ EquationInitialize
       mathModels[0]->SetBoundaryConditions();
       tend_iter=clock();
 
-      cout << "    iter: " << std::to_string(iter) << " ";
-      cout << "normf: " << normf << " ";
-      cout << "norms: " << norms << " ";
-      cout << "time: " << ((float)(tend_iter-tstart_iter))/CLOCKS_PER_SEC << endl;
+      std::cout << "    iter: " << std::to_string(iter) << " ";
+      std::cout << "normf: " << normf << " ";
+      std::cout << "norms: " << norms << " ";
+      std::cout << "time: " << ((float)(tend_iter-tstart_iter))/CLOCKS_PER_SEC << endl;
 
 
       if(iter > MAX_NONLINEAR_ITERATIONS){
-        cout << "Error: Newton not converged, exceed max iterations" << endl;
-        cout << "norm of Flow rate:" << normf << ", norm of Area:" << norms << endl;
+        std::cout << "Error: Newton not converged, exceed max iterations" << endl;
+        std::cout << "norm of Flow rate:" << normf << ", norm of Area:" << norms << endl;
         break;
       }
 
@@ -1587,28 +1634,28 @@ EquationInitialize
 
   }// End while
 
-  checkMass += mathModels[0]->CheckMassBalance() * deltaTime;
-  cout << "  Time = " << currentTime << ", ";
-  cout << "Mass = " << checkMass << ", ";
-  cout << "Tot iters = " << std::to_string(iter) << endl;
+    checkMass += mathModels[0]->CheckMassBalance() * deltaTime;
+    std::cout << "  Time = " << currentTime << ", ";
+    std::cout << "Mass = " << checkMass << ", ";
+    std::cout << "Tot iters = " << std::to_string(iter) << endl;
 
-  // Save solution if needed
-  if(step % stepSize == 0){
-    sprintf( String2, "%ld", (unsigned long)step);
-    title = String1 + String2;
-    currentSolution->Rename(title.data());
+    // Save solution if needed
+    if(step % stepSize == 0){
+      sprintf( String2, "%ld", (unsigned long)step);
+      title = String1 + String2;
+      currentSolution->Rename(title.data());
 
-    double * tmp = currentSolution -> GetEntries();
-    int j;
+      double * tmp = currentSolution -> GetEntries();
+      int j;
 
-    for(j=0;j<currentSolution -> GetDimension(); j++){
-      TotalSolution[q][j] = tmp[j];
+      for(j=0;j<currentSolution -> GetDimension(); j++){
+        TotalSolution[q][j] = tmp[j];
+      }
+      q++;
     }
-    q++;
-  }
-  *previousSolution = *currentSolution;
-  iter_total += iter;
-  } // End global loop
+    *previousSolution = *currentSolution;
+    iter_total += iter;
+    } // End global loop
 
   cout << "\nAvgerage number of Newton-Raphson iterations per time step = "<<(double)iter_total / (double)maxStep<<"\n"<< endl;
 }

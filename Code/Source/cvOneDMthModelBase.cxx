@@ -195,7 +195,7 @@ double cvOneDMthModelBase::CheckMassBalance(){
 
   long eqNumbers[2];  // Two degress of freedom per node
   double inletFlow = GetFlowRate();
-
+  
   if(cvOneDBFSolver::inletBCtype == BoundCondTypeScope::FLOW){
     inletFlow = GetFlowRate();
   }else{
