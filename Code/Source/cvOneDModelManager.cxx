@@ -65,7 +65,7 @@ int cvOneDModelManager::CreateMaterial(char *matName, char *MaterialTypeString,
   }else if(!strcmp (MaterialTypeString, "MATERIAL_LINEAR")){
     double EHR = params[0];
     *matID = cvOneDGlobal::gMaterialManager->AddNewMaterialLinear(density,dynamicViscosity,
-                                                                  profile_exponent,pRef,EHR);
+                                                                  profile_exponent,pRef,EHR,L_P,P_ambient);
     return CV_OK;
   }else{
     return CV_ERROR;

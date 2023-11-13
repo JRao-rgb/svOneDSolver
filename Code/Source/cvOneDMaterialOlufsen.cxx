@@ -151,11 +151,6 @@ void cvOneDMaterialOlufsen::SetStarlingAmbientPressure(double value) {
   cout << "P_ambient: "<< P_ambient << endl;
 }
 
-double cvOneDMaterialOlufsen::GetStarlingAmbientPressure() {
-  cout << "GetStarlingAmbientPressure function: P_ambient is: " << P_ambient << endl;
-  return P_ambient;
-}
-
 double cvOneDMaterialOlufsen::GetEHR(double z)const{
   double ro = Getr1(z);
   double ans =4./3.*( K1_*exp(K2_*ro) + K3_);//dyne/cm^2=g/cm/s^2
@@ -228,13 +223,15 @@ double cvOneDMaterialOlufsen::GetPressure(double S, double z)const{
 double cvOneDMaterialOlufsen::GetDpDS(double S, double z)const{
   double EHR = GetEHR(z);
   double So_ = GetS1(z);
-  double ro=Getr1(z);
+  double ro  = Getr1(z);
   double dpds=0.5* EHR * sqrt(So_/S)/S ;
 
   return dpds;
 }
 
 double cvOneDMaterialOlufsen::GetD2pDS2(double area, double z)const{
+  //JR: 13-11-23: this appears to be unused
+  cout << "GetD2pDS2 called!!!!" << endl;
   double EHR = GetEHR(z);
   double So_ = GetS1(z);
   return - 0.75 * EHR * sqrt(So_) / sqrt(pow(area, 5));
@@ -261,6 +258,7 @@ double cvOneDMaterialOlufsen::GetDD2PDzDS(double area, double z)const{
 
 
 double cvOneDMaterialOlufsen::GetIntegralpD2S(double area, double z)const{
+  // JR: 11-13-23: this is used and the form appears very different from the Olufsen model
   double EHR   = GetEHR(z);
   double DS1Dz = GetDS1Dz(z);
   double So_   = GetS1(z);

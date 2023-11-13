@@ -55,8 +55,6 @@ class cvOneDMaterialOlufsen:public cvOneDMaterial{
     void   SetSbottom(double S){Sbot = S;}
     void   SetLength(double length){len = length;}
     void   SetStarlingAmbientPressure(double value);
-    double GetStarlingAmbientPressure();
-    double GetFoo() {return K1_;};
     void   SetHydraulicConductivity(double value);
     void   SetMaterialType(double*, double);
     double GetProperty( char* what) const;

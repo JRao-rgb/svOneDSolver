@@ -64,16 +64,18 @@ cvOneDMaterialLinear::~cvOneDMaterialLinear(){
 double cvOneDMaterialLinear::GetIntegralpS(double area, double z)const{
   double EHR = GetEHR(z); //for this model it is a constant
   double So_ = GetS1(z);
-  double IntegralpS = EHR/3.0*So_*(area/So_*sqrt(area/So_)-1.0);
+  double IntegralpS = EHR*So_*(sqrt(area/So_)-1.0);
   return IntegralpS;
 }
 
 //Integral of dS(p,z,t)dz from ref P to P(t)
 double cvOneDMaterialLinear::GetIntegralpD2S (double area, double z)const{
+  // JR: 11-13-23: this is used and the form appears very different from the Olufsen model
   double EHR = GetEHR(z); //for this model it is a constant
   double So_ = GetS1(z);
   double dSo_dz = GetDS1Dz(z);
   double IntegralpD2S = EHR/3.0*dSo_dz*(area/So_*sqrt(area/So_)-1.0);
+  cout << IntegralpD2S << endl;
   return IntegralpD2S;
 }
 
@@ -162,10 +164,13 @@ double cvOneDMaterialLinear::GetArea(double pressure, double z)const{
   //       o Po is the the zero transmural pressure
   double pres = pressure;
   double So_  = GetS1(z);
-  double EHR  = GetEHR(z);//*4/3
+  double EHR  = GetEHR(z)*4/3; // JR: 13-11-2023: EHR is now multiplied by the correct factor (previously, the user
+  // was not instructed to multiply the EHR value by 4/3 in the input files.)
   
   // This is the area computation using the "pressure-strain" modulus, EHR.
-  double area = So_*pow(1.0+(pres-p1_)/EHR,2.0);
+  double area = So_/pow(1.0-(pres-p1_)/EHR,2.0);
+  // JR: 13-11-2023: the form of this function used to be incorrect (was So_*pow((press-p1_)/EHR-1.0,2)).
+  // This would result in ridiculous outputs. This should now be fixed.
   if(cvOneDGlobal::debugMode){
     printf("So_: %e\n",So_);
     printf("pres: %e\n",pres);
@@ -183,7 +188,9 @@ double cvOneDMaterialLinear::GetPressure(double S, double z)const{
   // Then we impliment Olufsen's constitutive law...
   double So_   = GetS1(z);
   double EHR   = GetEHR(z);  // From Olufsen's paper
-  double press = p1_ + EHR*(sqrt(S/So_)-1.0);// for linear model dynes/cm^2
+  double press = p1_ + EHR*(1.0-sqrt(So_/S));// for linear model dynes/cm^2
+  // JR: 13-11-2023: the form of the function used to be incorrect (was p1_ + EHR*(sqrt(So_/S)-1.0)). This results
+  // in ridiculous outputs and should now be fixed.
   return press;
 }
 
@@ -192,22 +199,25 @@ double cvOneDMaterialLinear::GetDpDS(double S, double z)const{
   double EHR = GetEHR(z);
   double So_ = GetS1(z);
   double ro  = Getr1(z);
-  double dpds=0.5* EHR/sqrt(So_*S) ;// for linear model
+  double dpds=0.5* EHR*sqrt(So_/S/S) ;// for linear model
   return dpds;
 }
 
 double cvOneDMaterialLinear::GetD2pDS2( double area, double z) const{
+  //JR: 13-11-23: this appears to be unused
+  cout << "GetD2pDS2 called!!!!" << endl;
   double EHR = GetEHR(z);
   double So_ = GetS1(z);
   return - EHR /4.0 /sqrt(So_)/sqrt(pow(area, 3));//VIE for linear model
 }
 
 double cvOneDMaterialLinear::GetOutflowFunction(double pressure, double z)const{
-  return 0.; // This is not used in our model
+  // cout << L_P * (pressure - P_ambient) << " ";
+  return L_P * (pressure - P_ambient); // This is not used in our model
 }
 
 double cvOneDMaterialLinear::GetDOutflowDp(double pressure, double z)const{
-  return 0.; // Nor is this.
+  return 0.0; // Nor is this.
 }
 
 // Careful!! this D2p(S,z)Dz first derivative, 2nd variable
